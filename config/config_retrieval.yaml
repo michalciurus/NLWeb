@@ -10,7 +10,7 @@ endpoints:
     db_type: azure_ai_search
 
   azure_ai_search:
-    enabled: true
+    enabled: false
     api_key_env: AZURE_VECTOR_SEARCH_API_KEY
     api_endpoint_env: AZURE_VECTOR_SEARCH_ENDPOINT
     index_name: embeddings1536
@@ -129,7 +129,7 @@ endpoints:
     db_type: snowflake_cortex_search
 
   cloudflare_autorag:
-    enabled: true
+    enabled: false
     api_key_env: CLOUDFLARE_API_TOKEN
     api_endpoint_env: CLOUDFLARE_AUTORAG_ENDPOINT
     index_name: CLOUDFLARE_RAG_ID_ENV
