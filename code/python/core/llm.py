@@ -163,7 +163,7 @@ async def ask_llm(
     schema: Dict[str, Any],
     provider: Optional[str] = None,
     level: str = "low",
-    timeout: int = 8,
+    timeout: int = 14,
     query_params: Optional[Dict[str, Any]] = None,
     max_length: int = 512
 ) -> Dict[str, Any]:
