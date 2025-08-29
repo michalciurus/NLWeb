@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python test:*)"
+    ],
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\mnt\\c\\Rrepos\\NLWeb\\code"
+    ]
+  }
+}

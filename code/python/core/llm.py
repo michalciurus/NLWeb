@@ -44,6 +44,7 @@ _llm_type_packages = {
     "azure_openai": ["openai>=1.12.0"],
     "llama_azure": ["openai>=1.12.0"],
     "deepseek_azure": ["openai>=1.12.0"],
+    "azure_ai_foundry": ["aiohttp>=3.9.1"],
     "inception": ["aiohttp>=3.9.1"],
     "snowflake": ["httpx>=0.28.1"],
     "huggingface": ["huggingface_hub>=0.31.0"],
@@ -134,6 +135,9 @@ def _get_provider(llm_type: str):
         elif llm_type == "deepseek_azure":
             from llm_providers.azure_deepseek import provider as deepseek_provider
             _loaded_providers[llm_type] = deepseek_provider
+        elif llm_type == "azure_ai_foundry":
+            from llm_providers.azure_ai_foundry import provider as azure_ai_foundry_provider
+            _loaded_providers[llm_type] = azure_ai_foundry_provider
         elif llm_type == "inception":
             from llm_providers.inception import provider as inception_provider
             _loaded_providers[llm_type] = inception_provider

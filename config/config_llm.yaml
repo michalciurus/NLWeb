@@ -1,4 +1,4 @@
-preferred_endpoint: azure_openai
+preferred_endpoint: azure_ai_foundry
 
 endpoints:
   inception:
@@ -39,6 +39,14 @@ endpoints:
     models:
       high: gpt-4.1
       low: gpt-4.1-mini
+
+  azure_ai_foundry:
+    api_key_env: AZURE_AI_FOUNDRY_API_KEY
+    api_endpoint_env: AZURE_AI_FOUNDRY_ENDPOINT
+    llm_type: azure_ai_foundry
+    models:
+      high: gpt-oss-120b
+      low: gpt-oss-120b
 
   llama_azure:
     api_key_env: LLAMA_AZURE_API_KEY
