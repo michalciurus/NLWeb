@@ -107,13 +107,15 @@ class AzureAIFoundryProvider(LLMProvider):
         # Handle None content case
         if content is None:
             logger.warning("Received None content from Azure AI Foundry")
-            return {}
+            return {"score": 0, "description": "No response from LLM"}
             
         # Handle empty string case
         response_text = content.strip()
         if not response_text:
             logger.warning("Received empty content from Azure AI Foundry")
-            return {}
+            return {"score": 0, "description": "Empty response from LLM"}
+        
+        logger.debug(f"Raw response content: {response_text}")
             
         # Remove markdown code block indicators if present
         response_text = response_text.replace('```json', '').replace('```', '').strip()
@@ -157,9 +159,8 @@ class AzureAIFoundryProvider(LLMProvider):
         end_idx = response_text.rfind('}') + 1
         
         if start_idx == -1 or end_idx == 0:
-            error_msg = "No valid JSON object found in response"
-            logger.error(f"{error_msg}, content: {response_text}")
-            return {}
+            logger.error(f"No valid JSON object found in response: {response_text}")
+            return {"score": 0, "description": "No valid JSON in response"}
             
         json_str = response_text[start_idx:end_idx]
                 
@@ -167,9 +168,8 @@ class AzureAIFoundryProvider(LLMProvider):
             result = json.loads(json_str)
             return result
         except json.JSONDecodeError as e:
-            error_msg = f"Failed to parse response as JSON: {e}"
-            logger.error(f"{error_msg}, content: {json_str}")
-            return {}
+            logger.error(f"Failed to parse extracted JSON: {e}, content: {json_str}")
+            return {"score": 0, "description": "Failed to parse JSON response"}
 
     async def get_completion(
         self,
@@ -209,7 +209,9 @@ class AzureAIFoundryProvider(LLMProvider):
         endpoint = self.get_azure_endpoint()
         
         system_prompt = f"""You must respond with valid JSON that matches this schema: {json.dumps(schema)}
-Your response must be a JSON object with the exact structure specified in the schema."""
+Your response must be a JSON object with the exact structure specified in the schema.
+
+IMPORTANT: Always return a valid JSON response. If you cannot determine a proper score or description, return {{"score": 0, "description": "Unable to rank this item"}} instead of empty responses or error messages."""
         
         request_body = {
             "messages": [
@@ -239,21 +241,25 @@ Your response must be a JSON object with the exact structure specified in the sc
                 if response.status != 200:
                     error_text = await response.text()
                     logger.error(f"Azure AI Foundry API error (status {response.status}): {error_text}")
-                    return {}
+                    return {"score": 0, "description": f"API error: status {response.status}"}
                 
                 response_json = await response.json()
+                logger.debug(f"Raw response_json from Azure AI Foundry: {response_json}")
                 
                 # Extract content from the response
                 if not response_json or "choices" not in response_json or not response_json["choices"]:
                     logger.error("Invalid or empty response from Azure AI Foundry")
-                    return {}
+                    logger.error(f"Full response was: {response_json}")
+                    return {"score": 0, "description": "Invalid API response structure"}
                 
                 choice = response_json["choices"][0]
                 if "message" not in choice or "content" not in choice["message"]:
                     logger.error("Response does not contain expected 'message.content' structure")
-                    return {}
+                    logger.error(f"Choice structure was: {choice}")
+                    return {"score": 0, "description": "Missing content in API response"}
                 
                 content = choice["message"]["content"]
+                logger.debug(f"Raw content from LLM before clean_response: {repr(content)}")
                 result = self.clean_response(content)
                 
                 logger.debug(f"Successfully received and parsed response from Azure AI Foundry")
@@ -261,10 +267,10 @@ Your response must be a JSON object with the exact structure specified in the sc
                 
         except asyncio.TimeoutError:
             logger.error(f"Azure AI Foundry request timed out after {timeout} seconds")
-            return {}
+            return {"score": 0, "description": f"Request timed out after {timeout}s"}
         except aiohttp.ClientError as e:
             logger.error(f"Azure AI Foundry HTTP request failed: {type(e).__name__}: {str(e)}")
-            return {}
+            return {"score": 0, "description": f"HTTP request failed: {type(e).__name__}"}
         except Exception as e:
             logger.error(f"Azure AI Foundry completion failed: {type(e).__name__}: {str(e)}")
             raise
