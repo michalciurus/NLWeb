@@ -117,7 +117,41 @@ class AzureAIFoundryProvider(LLMProvider):
             
         # Remove markdown code block indicators if present
         response_text = response_text.replace('```json', '').replace('```', '').strip()
+        
+        # Try to parse the entire response as JSON first
+        try:
+            result = json.loads(response_text)
+            logger.debug(f"Successfully parsed entire response as JSON: {result}")
+            
+            # Handle the 'final' wrapper issue - unwrap if needed
+            if isinstance(result, dict) and 'final' in result and 'score' not in result:
+                final_content = result['final']
+                logger.debug(f"Unwrapping 'final' key, content: {final_content}")
                 
+                # Handle array wrapper
+                if isinstance(final_content, list) and len(final_content) > 0:
+                    final_content = final_content[0]
+                
+                # Parse JSON string if it's a string
+                if isinstance(final_content, str):
+                    try:
+                        unwrapped = json.loads(final_content)
+                        logger.debug(f"Successfully unwrapped final content: {unwrapped}")
+                        return unwrapped
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse 'final' content as JSON: {final_content}")
+                        return {"score": 0, "description": "Malformed response from LLM"}
+                
+                # If final_content is already a dict, return it
+                if isinstance(final_content, dict):
+                    return final_content
+            
+            return result
+            
+        except json.JSONDecodeError:
+            # If that fails, try to find and extract a JSON object
+            logger.error("Failed to parse entire response as JSON, trying to extract JSON object")
+            
         # Find the JSON object within the response
         start_idx = response_text.find('{')
         end_idx = response_text.rfind('}') + 1
@@ -190,11 +224,12 @@ Your response must be a JSON object with the exact structure specified in the sc
             ],
             "max_completion_tokens": max_tokens,
             "temperature": temperature,
-            "top_p": 1,
+            "top_p": 0.1,
             "frequency_penalty": 0,
             "presence_penalty": 0,
             "model": model_to_use,
-            "response_format": {"type": "json_object"}
+            "response_format": {"type": "json_object"},
+            "reasoning_effort": "low"
         }
         
         logger.debug(f"Sending completion request to Azure AI Foundry with model: {model_to_use}")

@@ -119,6 +119,8 @@ The user's question is: {request.query}. The item's description is {item.descrip
         
         except Exception as e:
             logger.error(f"Error in rankItem for {name}: {str(e)}")
+            logger.error(f"Raw input that caused error - name: {name}, json_str: {json_str}, url: {url}, site: {site}")
+            logger.error(f"Ranking response from LLM: {locals().get('ranking', 'NOT_SET')}")
             logger.debug(f"Full error trace: ", exc_info=True)
             # Import here to avoid circular import
             from config.config import CONFIG
