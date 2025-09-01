@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python test:*)"
+      "Bash(python test:*)",
+      "Bash(python:*)",
+      "Bash(where python)",
+      "Bash(\"C:\\Rrepos\\NLWeb\\myenv\\Scripts\\python.exe\" -m testing.run_tests --help)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
