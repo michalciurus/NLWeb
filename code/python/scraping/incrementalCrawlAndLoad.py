@@ -191,10 +191,23 @@ class IncrementalCrawler:
     
     async def _fetch_page(self, url: str) -> Optional[Tuple[str, int]]:
         """Fetch a single page and return HTML content and size."""
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/114.0.0.0 Safari/537.36"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Referer": f"https://{self.domain}/",
+            "Connection": "keep-alive",
+            "DNT": "1",
+            "Upgrade-Insecure-Requests": "1"
+        }
         async with aiohttp.ClientSession() as session:
             for attempt in range(self.max_retries):
                 try:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                    async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
                         if response.status == 200:
                             html = await response.text()
                             return html, len(html.encode('utf-8'))
